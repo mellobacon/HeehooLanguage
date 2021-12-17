@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeehooLanguage", "HeehooLanguage\HeehooLanguage.csproj", "{D4495AED-8331-4F86-A696-7124CD80F814}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeehooLanguage", "src\HeehooLanguage\HeehooLanguage.csproj", "{D4495AED-8331-4F86-A696-7124CD80F814}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
