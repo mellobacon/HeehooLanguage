@@ -85,7 +85,7 @@ public class Lexer
                 text = "(";
                 break;
             case ')':
-                _kind = SyntaxKind.ClosedParenToken;
+                _kind = SyntaxKind.CloseParenToken;
                 Advance(1);
                 text = ")";
                 break;
