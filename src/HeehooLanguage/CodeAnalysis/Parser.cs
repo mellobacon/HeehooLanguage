@@ -195,9 +195,7 @@ public class Parser
 				return new LiteralExpression(number);
 			}
 			default:
-			{
 				return null;
-			}
 		}
 	}
 	
