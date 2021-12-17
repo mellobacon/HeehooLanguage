@@ -55,16 +55,17 @@ public static class SyntaxFacts
 		return 0;
 	}
 	
-	public static SyntaxKind GetKeywordType(string text)
+	public static SyntaxKind GetKind(this string text)
 	{
 		return text switch
 		{
-			"True" => SyntaxKind.TrueKeyword,
-			"False" => SyntaxKind.FalseKeyword,
+			"true" => SyntaxKind.TrueKeyword,
+			"false" => SyntaxKind.FalseKeyword,
+			_ => SyntaxKind.BadToken 
 		};
 	}
 	
-	public static string? GetText(SyntaxKind kind)
+	public static string? GetText(this SyntaxKind kind)
 	{
 		return kind switch
 		{
@@ -72,6 +73,7 @@ public static class SyntaxFacts
 			SyntaxKind.MinusToken => "-",
 			SyntaxKind.StarToken => "*",
 			SyntaxKind.SlashToken => "/",
+			SyntaxKind.ModuloToken => "%",
 			SyntaxKind.OpenParenToken => "(",
 			SyntaxKind.CloseParenToken => ")",
 			SyntaxKind.HatToken => "^",
@@ -79,7 +81,13 @@ public static class SyntaxFacts
 			SyntaxKind.EqualsToken => "=",
 			SyntaxKind.BangEqualsToken => "!=",
 			SyntaxKind.EqualsEqualsToken => "==",
+			SyntaxKind.GreaterToken => ">",
+			SyntaxKind.GreaterEqualsToken => ">=",
+			SyntaxKind.LessToken => "<",
+			SyntaxKind.LessEqualsToken => "<=",
+			SyntaxKind.PipeToken => "|",
 			SyntaxKind.PipePipeToken => "||",
+			SyntaxKind.AmpersandToken => "&",
 			SyntaxKind.AmpersandAmpersandToken => "&&",
 			SyntaxKind.TrueKeyword => "true",
 			SyntaxKind.FalseKeyword => "false",

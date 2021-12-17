@@ -13,7 +13,12 @@ public class SyntaxTree
 	
 	public IExpression Root { get; }
 
-	public static void WriteTo(TextWriter writer, ISyntaxNode node, string indent = "", bool isLast = true)
+	public void WriteTo(TextWriter writer)
+	{
+		PrettyPrintTo(writer, Root);
+	}
+	
+	private static void PrettyPrintTo(TextWriter writer, ISyntaxNode node, string indent = "", bool isLast = true)
 	{
 		var marker = isLast 
 			? "└──".ColorizeForeground(Color.Coral) 
@@ -37,7 +42,7 @@ public class SyntaxTree
 		var lastChild = node.GetChildren().LastOrDefault();
 		foreach (var child in node.GetChildren())
 		{
-			WriteTo(writer, child, indent, child == lastChild);
+			PrettyPrintTo(writer, child, indent, child == lastChild);
 		}
 	}
 }

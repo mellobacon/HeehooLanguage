@@ -1,5 +1,12 @@
 ﻿namespace HeehooLanguage.CodeAnalysis;
 
+// NOTE: Hi future Mello, I've left you some improvement notes, whether you follow them or not,
+// is entirely up to you, since your job is the lexer, I just thought I'd review it.
+// TODO(1): Biggest not, REPORT ERRORS, please make sure to report errors, so you can pass them on
+// to the parser, that way we can append errors to the parser, resolver, and interpreter. 
+
+// TODO(2): Consider checking !IsAtEnd in all of your while loops when going over text, just to 
+// make sure that you never end up attempting to read memory that doesn't exist.
 public class Lexer
 {
     private readonly string _text;
@@ -16,34 +23,53 @@ public class Lexer
 
     private char Peek(int offset)
     {
-        int index = _position + offset;
-        return index >= _text.Length ? '\0' : _text[index];
+        checked
+        {
+            int index = _position + offset; 
+            return index >= _text.Length ? '\0' : _text[index];
+        }
     }
 
     private void Advance(int offset)
     {
-        _position += offset;
+        checked
+        {
+            _position += offset;
+        }
     }
 
     private void LexNumberTokens()
     {
         object? value = null;
+        // add support for '_' in numbers, but  remember you can't have two consecutive underscores back to back
+        // 1_000_000 is valid, but 1__000__000 is not. Same for ensuring that multiple decimals aren't used, like
+        // 12..69 or even 12._69, consider these possibilities and how the Lexer would react to these tokens. 
         while (char.IsDigit(Current) || Current == '.')
         {
             Advance(1);
         }
 
-        int length = _position - _start;
+        int length;
+        checked
+        {
+            length = _position - _start;
+        }
+        
+        // just a miner note if you want, you don't need to calculate the length if you want,
+        // you can use '_text[_start.._position], the range will be Start include, and
+        // End exclusive -- meaning it ranges from the start position to just *before*
         string text = _text.Substring(_start, length);
-
-        if (text.Contains('.'))
+        
+        // why only float? what about double?, what about supporting
+        // numbers like 42.12f or 69.7d
+        if (text.Contains('.')) 
         {
             if (float.TryParse(text, out float f))
             {
                 value = f;   
             }
         }
-        else
+        else // why only int32? 
         {
             if (int.TryParse(text, out int i))
             {
@@ -51,8 +77,8 @@ public class Lexer
             }
         }
 
-        _kind = value != null ? SyntaxKind.NumberToken : SyntaxKind.BadToken;
-
+        // consider using "is not" over "!=" for null checks
+        _kind = value is not null ? SyntaxKind.NumberToken : SyntaxKind.BadToken;
         _value = value;
     }
 
@@ -72,9 +98,10 @@ public class Lexer
         {
             Advance(1);
         }
+        
         int length = _position - _start;
         string text = _text.Substring(_start, length);
-        _kind = SyntaxFacts.GetKeywordType(text);
+        _kind = text.GetKind();
         _value = _kind != SyntaxKind.FalseKeyword;
     }
 
@@ -187,6 +214,8 @@ public class Lexer
                 Advance(1);
                 break;
             default:
+                // Why in the default case? why not use `case var _ when char.IsDigit(Current) || Current == '.':'
+                // Also don't forget to allow '_' for numbers AND the identifiers, like variables starting with underscore.
                 if (char.IsDigit(Current) || Current == '.')
                 {
                     LexNumberTokens();
@@ -205,12 +234,19 @@ public class Lexer
                 }
                 break;
         }
-        string? text = SyntaxFacts.GetText(_kind);
         
-        if (text == null)
+        string? text = _kind.GetText();
+        // I changed this to string.IsNullOrWhiteSpace because you should be checking 
+        // if a string is null, contains only whitespace characters (even zero width),
+        // and if it's just empty (aka length == 0)
+        if (string.IsNullOrWhiteSpace(text))
         {
-            int length = _position - _start;
-            text = _text.Substring(_start, length);
+            // checked again here, because what happens if we end up overflowing?
+            checked
+            {
+                int length = _position - _start;
+                text = _text.Substring(_start, length);
+            }
         }
         return new SyntaxToken(text, _kind, _value);
     }
