@@ -18,8 +18,6 @@ var interpreter = new Interpreter(expression);
 var value = interpreter.Interpret();
 Console.Out.WriteLine(value ?? "interpreter most likely failed :/");
 
-SyntaxTree.WriteTo(Console.Out, syntaxTree.Root);
-
 if (!errors.Any())
 {
     SyntaxTree.WriteTo(Console.Out, syntaxTree.Root);
