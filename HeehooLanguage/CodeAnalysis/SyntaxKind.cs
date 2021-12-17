@@ -8,6 +8,9 @@ public enum SyntaxKind
     StarToken,
     SlashToken,
     ModuloToken,
+    OpenParenToken,
+    ClosedParenToken,
+    HatToken,
     
     WhitespaceToken,
     BadToken,
