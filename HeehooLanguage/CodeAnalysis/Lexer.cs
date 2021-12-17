@@ -27,27 +27,28 @@ public class Lexer
 
     private string LexNumberTokens()
     {
-        var dotcount = 0;
         object? value = null;
         while (char.IsDigit(Current) || Current == '.')
         {
-            if (Current == '.')
-            {
-                dotcount++;
-            }
             Advance(1);
         }
 
         int length = _position - _start;
         string text = _text.Substring(_start, length);
 
-        if (float.TryParse(text, out float f))
+        if (text.Contains('.'))
         {
-            value = f;   
+            if (float.TryParse(text, out float f))
+            {
+                value = f;   
+            }
         }
-        else if (int.TryParse(text, out int i))
+        else
         {
-            value = i;
+            if (int.TryParse(text, out int i))
+            {
+                value = i;
+            }
         }
 
         _kind = value != null ? SyntaxKind.NumberToken : SyntaxKind.BadToken;
@@ -78,15 +79,20 @@ public class Lexer
             case '\0':
                 _kind = SyntaxKind.EofToken;
                 break;
-            case '+':
-                _kind = SyntaxKind.PlusToken;
-                text = "+";
+            case '(':
+                _kind = SyntaxKind.OpenParenToken;
                 Advance(1);
+                text = "(";
                 break;
-            case '-':
-                _kind = SyntaxKind.MinusToken;
-                text = "-";
+            case ')':
+                _kind = SyntaxKind.ClosedParenToken;
                 Advance(1);
+                text = ")";
+                break;
+            case '^':
+                _kind = SyntaxKind.HatToken;
+                Advance(1);
+                text = "^";
                 break;
             case '*':
                 _kind = SyntaxKind.StarToken;
@@ -103,8 +109,18 @@ public class Lexer
                 text = "%";
                 Advance(1);
                 break;
+            case '+':
+                _kind = SyntaxKind.PlusToken;
+                text = "+";
+                Advance(1);
+                break;
+            case '-':
+                _kind = SyntaxKind.MinusToken;
+                text = "-";
+                Advance(1);
+                break;
             default:
-                if (char.IsDigit(Current))
+                if (char.IsDigit(Current) || Current == '.')
                 {
                     text = LexNumberTokens();
                 }
@@ -113,9 +129,14 @@ public class Lexer
                     LexWhitespaceTokens();
                     text = "█";
                 }
+                else
+                {
+                    Advance(1);
+                    int length = _position - _start;
+                    text = _text.Substring(_start, length);
+                }
                 break;
         }
-
         return new SyntaxToken(text, _kind, _value);
     }
 }
