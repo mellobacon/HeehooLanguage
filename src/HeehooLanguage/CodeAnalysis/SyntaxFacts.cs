@@ -55,4 +55,36 @@ public static class SyntaxFacts
 		return 0;
 	}
 	
+	public static SyntaxKind GetKeywordType(string text)
+	{
+		return text switch
+		{
+			"True" => SyntaxKind.TrueKeyword,
+			"False" => SyntaxKind.FalseKeyword,
+		};
+	}
+	
+	public static string? GetText(SyntaxKind kind)
+	{
+		return kind switch
+		{
+			SyntaxKind.PlusToken => "+",
+			SyntaxKind.MinusToken => "-",
+			SyntaxKind.StarToken => "*",
+			SyntaxKind.SlashToken => "/",
+			SyntaxKind.OpenParenToken => "(",
+			SyntaxKind.CloseParenToken => ")",
+			SyntaxKind.HatToken => "^",
+			SyntaxKind.BangToken => "!",
+			SyntaxKind.EqualsToken => "=",
+			SyntaxKind.BangEqualsToken => "!=",
+			SyntaxKind.EqualsEqualsToken => "==",
+			SyntaxKind.PipePipeToken => "||",
+			SyntaxKind.AmpersandAmpersandToken => "&&",
+			SyntaxKind.TrueKeyword => "true",
+			SyntaxKind.FalseKeyword => "false",
+			_ => null
+		};
+	}
+	
 }
