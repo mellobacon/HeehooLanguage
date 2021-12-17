@@ -1,5 +1,7 @@
-﻿using HeehooLanguage.CodeAnalysis.Expressions;
+﻿using System.Linq.Expressions;
+using HeehooLanguage.CodeAnalysis.Expressions;
 using HeehooLanguage.CodeAnalysis.Resolving;
+using JetBrains.Annotations;
 
 namespace HeehooLanguage.CodeAnalysis;
 
@@ -33,20 +35,26 @@ public class Interpreter
 			case ResolvedUnaryExpression unary:
 			{
 				var operand = InterpretExpression(unary.Operand);
+				if (operand is null)
+				{
+					return null;
+				}
 				switch (unary.Operator.OperatorKind)
 				{
 					case ResolvedOperatorKind.Identity:
-					{
-						return ResolveIdentity(operand);
-					}
+						return operand;
 					case ResolvedOperatorKind.Negation:
-					{
-						return ResolveNegation(operand);
-					}
+						if (!operand.GetType().IsValueType)
+						{
+							return null;
+						}
+						if (operand is bool boolOp)
+						{
+							return !boolOp;
+						}
+						return -(dynamic)operand;
 					case ResolvedOperatorKind.LogicalNegation:
-					{
-						return ResolveLogicalNegation(operand);
-					}
+						return !(bool)operand;
 					default:
 						return null;
 				}
@@ -56,30 +64,35 @@ public class Interpreter
 				var left = InterpretExpression(binary.Left);
 				var right = InterpretExpression(binary.Right);
 
+				if (left is null || right is null)
+				{
+					return null;
+				}
+				
 				switch (binary.Operator.OperatorKind)
 				{
 					case ResolvedOperatorKind.Addition:
-						return ResolveAddition(left, right);
+						return ObjectMath.Add(left, right);
 					case ResolvedOperatorKind.Subtraction:
-						return ResolveSubtraction(left, right);
+						return ObjectMath.Subtract(left, right);
 					case ResolvedOperatorKind.Multiplication:
-						return ResolveMultiplication(left, right);
+						return ObjectMath.Multiply(left, right);
 					case ResolvedOperatorKind.Division:
-						return ResolveDivision(left, right);
+						return ObjectMath.Divide(left, right);
 					case ResolvedOperatorKind.Remainder:
-						return ResolveRemainder(left, right);
+						return ObjectMath.Mod(left, right);	
 					case ResolvedOperatorKind.Equals:
-						return ResolveEquals(left, right);
+						return ObjectMath.Equals(left, right);
 					case ResolvedOperatorKind.NotEquals:
-						return ResolveNotEquals(left, right);
+						return ObjectMath.NotEquals(left, right);
 					case ResolvedOperatorKind.LogicalAnd:
-						return ResolveLogicalAnd(left, right);
+						return ObjectMath.LogicalAnd(left, right);
 					case ResolvedOperatorKind.LogicalOr:
-						return ResolveLogicalOr(left, right);
+						return ObjectMath.LogicalOr(left, right);
 					case ResolvedOperatorKind.BitwiseAnd:
-						return ResolveBitwiseAnd(left, right);
+						return ObjectMath.BitwiseAnd(left, right);
 					case ResolvedOperatorKind.BitwiseOr:
-						return ResolveBitwiseOr(left, right);
+						return ObjectMath.BitwiseOr(left, right);
 					default:
 						return null;
 				}
@@ -87,323 +100,5 @@ public class Interpreter
 			default:
 				return null;
 		}
-	}
-
-	private object? ResolveAddition(object? left, object? right)
-	{
-		if (left is null || right is null)
-		{
-			return null;
-		}
-
-		if (left is int && right is int)
-		{
-			return (int) left + (int) right;
-		}
-		if (left is float && right is int)
-		{
-			return (float)left + (int)right;
-		}
-		if (left is int && right is float)
-		{
-			return (int)left + (float)right;
-		}
-
-		if (left is float && right is float)
-		{
-			return (float)left + (float)right;
-		}
-		return null;
-	}
-
-	private object? ResolveSubtraction(object? left, object? right)
-	{
-		if (left is null || right is null)
-		{
-			return null;
-		}
-		
-		if (left is int && right is int)
-		{
-			return (int) left - (int) right;
-		}
-		if (left is float && right is int)
-		{
-			return (float)left - (int)right;
-		}
-		if (left is int && right is float)
-		{
-			return (int)left - (float)right;
-		}
-
-		if (left is float && right is float)
-		{
-			return (float)left - (float)right;
-		}
-		return null;
-	}
-
-	private object? ResolveMultiplication(object? left, object? right)
-	{
-		if (left is null || right is null)
-		{
-			return null;
-		}
-		
-		if (left is int && right is int)
-		{
-			return (int) left * (int) right;
-		}
-		if (left is float && right is int)
-		{
-			return (float)left * (int)right;
-		}
-		if (left is int && right is float)
-		{
-			return (int)left * (float)right;
-		}
-		if (left is float && right is float)
-		{
-			return (float)left * (float)right;
-		}
-
-		return null;
-	}
-
-	private object? ResolveDivision(object? left, object? right)
-	{
-		if (left is null || right is null)
-		{
-			return null;
-		}
-		
-		if (left is int && right is int)
-		{
-			return (int) left / (int) right;
-		}
-		if (left is float && right is int)
-		{
-			return (float)left / (int)right;
-		}
-		if (left is int && right is float)
-		{
-			return (int)left / (float)right;
-		}
-		if (left is float && right is float)
-		{
-			return (float)left / (float)right;
-		}
-		return null;
-	}
-
-	private object? ResolveRemainder(object? left, object? right)
-	{
-		if (left is null || right is null)
-		{
-			return null;
-		}
-		
-		if (left is int && right is int)
-		{
-			return (int) left % (int) right;
-		}
-		if (left is float && right is int)
-		{
-			return (float)left % (int)right;
-		}
-		if (left is int && right is float)
-		{
-			return (int)left % (float)right;
-		}
-
-		return null;
-	}
-
-	private object? ResolveEquals(object? left, object? right)
-	{
-		if (left is null || right is null)
-		{
-			return null;
-		}
-		
-		if (left is int && right is int)
-		{
-			return (int)left == (int)right;
-		}
-		if (left is float && right is int)
-		{
-			return Math.Abs((float)left - (int)right) < float.Epsilon;
-		}
-		if (left is int && right is float)
-		{
-			return Math.Abs((int)left - (float)right) < float.Epsilon;
-		}
-		if (left is float && right is float)
-		{
-			return Math.Abs((float)left - (float)right) < float.Epsilon;
-		}
-
-		return null;
-	}
-
-	private object? ResolveNotEquals(object? left, object? right)
-	{
-		if (left is null || right is null)
-		{
-			return null;
-		}
-		
-		if (left is int && right is int)
-		{
-			return (int)left != (int)right;
-		}
-		if (left is float && right is int)
-		{
-			return Math.Abs((float)left - (int)right) > float.Epsilon;
-		}
-		if (left is int && right is float)
-		{
-			return Math.Abs((int)left - (float)right) > float.Epsilon;
-			
-		}
-		if (left is float && right is float)
-		{
-			return Math.Abs((float)left - (float)right) > float.Epsilon;
-		}
-
-		return null;
-	}
-	
-	private object? ResolveLogicalAnd(object? left, object? right)
-	{
-		if (left is null || right is null)
-		{
-			return null;
-		}
-
-		if (left is bool && right is bool)
-		{
-			return (bool)left && (bool)right;
-		}
-
-		return null;
-	}
-
-	private object? ResolveLogicalOr(object? left, object? right)
-	{
-		if (left is null || right is null)
-		{
-			return null;
-		}
-
-		if (left is bool && right is bool)
-		{
-			return (bool)left || (bool)right;
-		}
-
-		return null;
-	}
-
-	private object? ResolveBitwiseAnd(object? left, object? right)
-	{
-		if (left is null || right is null)
-		{
-			return null;
-		}
-
-		if (left is int && right is int)
-		{
-			return (int)left & (int)right;
-		}
-		if (left is bool && right is bool)
-		{
-			return (bool)left & (bool)right;
-		}
-
-		return null;
-	}
-
-	private object? ResolveBitwiseOr(object? left, object? right)
-	{
-		if (left is null || right is null)
-		{
-			return null;
-		}
-
-		if (left is int && right is int)
-		{
-			return (int)left | (int)right;
-		}
-		if (left is bool && right is bool)
-		{
-			return (bool)left | (bool)right;
-		}
-
-		return null;
-	}
-	
-	private object? ResolveIdentity(object? operand)
-	{
-		if (operand is null)
-		{
-			return null;
-		}
-
-		if (operand is int intOp)
-		{
-			return intOp;
-		}
-
-		if (operand is float floatOp)
-		{
-			return floatOp;
-		}
-
-		if (operand is bool boolOp)
-		{
-			return boolOp;
-		}
-
-		return null;
-	}
-
-	private object? ResolveNegation(object? operand)
-	{
-		if (operand is null)
-		{
-			return null;
-		}	
-		
-		if (operand is int intOp)
-		{
-			return -intOp;
-		}
-
-		if (operand is float floatOp)
-		{
-			return -floatOp;
-		}
-
-		if (operand is bool boolOp)
-		{
-			return !boolOp;
-		}
-
-		return null;
-	}
-
-	private object? ResolveLogicalNegation(object? operand)
-	{
-		if (operand is null)
-		{
-			return null;
-		}
-
-		if (operand is bool boolOp)
-		{
-			return boolOp;
-		}
-
-		return null;
 	}
 }
