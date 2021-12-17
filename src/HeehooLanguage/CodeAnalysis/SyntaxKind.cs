@@ -12,12 +12,28 @@ public enum SyntaxKind
     SlashToken,
     ModuloToken,
     HatToken,
+    BangToken,
+    BangEqualsToken,
+    EqualsToken,
+    EqualsEqualsToken,
+    GreaterToken,
+    GreaterEqualsToken,
+    LessToken,
+    LessEqualsToken,
+    PipeToken,
+    PipePipeToken,
+    AmpersandToken,
+    AmpersandAmpersandToken,
+    
+    FalseKeyword,
+    TrueKeyword,
     
     WhitespaceToken,
     BadToken,
     EofToken,
     
+    UnaryExpression,
     BinaryExpression,
-    NumberExpression,
+    LiteralExpression,
     GroupedExpression
 }

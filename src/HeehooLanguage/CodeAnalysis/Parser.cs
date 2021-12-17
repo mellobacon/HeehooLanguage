@@ -28,6 +28,7 @@ public class Parser
 		}
 	}
 
+	// these will be used in the future
 	private SyntaxToken Previous => this[-1];
 	private SyntaxToken Current => this[0];
 	private SyntaxToken Next => this[1];
@@ -46,49 +47,70 @@ public class Parser
 		}
 	}
 	
-	public SyntaxTree Parse(out IReadOnlyList<string> errors)
+	// The root parsing function, attempts to recursively build an abstract syntax tree
+	public SyntaxTree? Parse(out IReadOnlyList<string> errors)
 	{
-		var rootExpression = ParseTerm();
+		var rootExpression = ParseExpression();
 		errors = m_errors;
+		
+		if (rootExpression is null)
+		{
+			return null;
+		}
 		return new SyntaxTree(rootExpression);
 	}
-
-	private IExpression ParseExpression()
+	
+	private IExpression? ParseExpression(int previousPrecedence = 0)
 	{
-		return ParseTerm();
+		return ParseUnaryExpression(previousPrecedence);
 	}
-
-	private IExpression ParseTerm()
+ 
+	private IExpression? ParseUnaryExpression(int previousPrecedence = 0)
 	{
-		var left = ParseFactor();
-		while (Current.Kind == SyntaxKind.PlusToken ||
-		       Current.Kind == SyntaxKind.MinusToken)
+		IExpression? left;
+		var unaryPrecedence = Current.Kind.LookupUnaryPrecedence();
+		if (unaryPrecedence != 0 && unaryPrecedence >= previousPrecedence)
 		{
 			var op = Consume();
-			var right = ParseFactor();
+			var operand = ParseExpression(unaryPrecedence);
+			if (operand is null)
+			{
+				return null;
+			}
+			left = new UnaryExpression(op, operand);
+		}
+		else
+		{
+			left = ParsePrimary();
+		}
+
+		return ParseBinaryExpression(left);
+	}
+
+	private IExpression? ParseBinaryExpression(IExpression? left, int previousPrecedence = 0)
+	{
+		while (true)
+		{
+			var binaryPrecedence = Current.Kind.LookupBinaryPrecedence();
+			if (binaryPrecedence == 0 || binaryPrecedence <= previousPrecedence)
+			{
+				break;
+			}
+
+			var op = Consume();
+			var right = ParseExpression(binaryPrecedence);
+			if (left is null || right is null)
+			{
+				return null;
+			}
+			
 			left = new BinaryExpression(left, op, right);
 		}
 
 		return left;
 	}
 
-	private IExpression ParseFactor()
-	{
-		var left = ParsePrimary();
-
-		while (Current.Kind == SyntaxKind.StarToken ||
-		       Current.Kind == SyntaxKind.SlashToken ||
-		       Current.Kind == SyntaxKind.ModuloToken)
-		{
-			var op = Consume();
-			var right = ParsePrimary();
-			left = new BinaryExpression(left, op, right);
-		}
-
-		return left;
-	}
-
-	private IExpression ParsePrimary()
+	private IExpression? ParsePrimary()
 	{
 		switch (Current.Kind)
 		{
@@ -97,12 +119,31 @@ public class Parser
 				var left = Consume();
 				var expression = ParseExpression();
 				var right = MatchWith(SyntaxKind.CloseParenToken);
+				if (expression is null)
+				{
+					return null;
+				}
 				return new GroupedExpression(left, expression, right);
 			}
+			case SyntaxKind.FalseKeyword:
+			case SyntaxKind.TrueKeyword:
+			{
+				var keyword = Consume();
+				// if our token type is the true keyword, it's guaranteed to represent a truthy value,
+				// otherwise, the only logical option is for it to be false
+				var value = keyword.Kind == SyntaxKind.TrueKeyword;
+				return new LiteralExpression(keyword, value);
+			}
+			case SyntaxKind.NumberToken:
+			{
+				var number = MatchWith(SyntaxKind.NumberToken);
+				return new LiteralExpression(number);
+			}
+			default:
+			{
+				return null;
+			}
 		}
-		
-		var number = MatchWith(SyntaxKind.NumberToken);
-		return new NumberExpression(number);
 	}
 	
 
