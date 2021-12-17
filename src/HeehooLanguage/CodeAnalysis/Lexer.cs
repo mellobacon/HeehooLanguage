@@ -25,7 +25,7 @@ public class Lexer
         _position += offset;
     }
 
-    private string LexNumberTokens()
+    private void LexNumberTokens()
     {
         object? value = null;
         while (char.IsDigit(Current) || Current == '.')
@@ -54,7 +54,6 @@ public class Lexer
         _kind = value != null ? SyntaxKind.NumberToken : SyntaxKind.BadToken;
 
         _value = value;
-        return text;
     }
 
     private void LexWhitespaceTokens()
@@ -67,12 +66,23 @@ public class Lexer
         _kind = SyntaxKind.WhitespaceToken;
     }
 
+    private void LexLetterTokens()
+    {
+        while (char.IsLetter(Current))
+        {
+            Advance(1);
+        }
+        int length = _position - _start;
+        string text = _text.Substring(_start, length);
+        _kind = SyntaxFacts.GetKeywordType(text);
+        _value = _kind != SyntaxKind.FalseKeyword;
+    }
+
     public SyntaxToken Lex()
     {
         _start = _position;
         _kind = SyntaxKind.BadToken;
         _value = null;
-        string? text = null;
 
         switch (Current)
         {
@@ -82,60 +92,125 @@ public class Lexer
             case '(':
                 _kind = SyntaxKind.OpenParenToken;
                 Advance(1);
-                text = "(";
                 break;
             case ')':
                 _kind = SyntaxKind.CloseParenToken;
                 Advance(1);
-                text = ")";
                 break;
             case '^':
                 _kind = SyntaxKind.HatToken;
                 Advance(1);
-                text = "^";
                 break;
             case '*':
                 _kind = SyntaxKind.StarToken;
-                text = "*";
                 Advance(1);
                 break;
             case '/':
                 _kind = SyntaxKind.SlashToken;
-                text = "/";
                 Advance(1);
                 break;
             case '%':
                 _kind = SyntaxKind.ModuloToken;
-                text = "%";
                 Advance(1);
                 break;
             case '+':
                 _kind = SyntaxKind.PlusToken;
-                text = "+";
                 Advance(1);
                 break;
             case '-':
                 _kind = SyntaxKind.MinusToken;
-                text = "-";
+                Advance(1);
+                break;
+            case '!':
+                if (Peek(1) == '=')
+                {
+                    _kind = SyntaxKind.BangEqualsToken;
+                    Advance(2);
+                    break;
+                }
+                _kind = SyntaxKind.BangToken;
+                Advance(1);
+                break;
+            case '=':
+                if (Peek(1) == '=')
+                {
+                    _kind = SyntaxKind.EqualsEqualsToken;
+                    Advance(2);
+                    break;
+                }
+
+                _kind = SyntaxKind.EqualsToken;
+                Advance(1);
+                break;
+            case '>':
+                if (Peek(1) == '=')
+                {
+                    _kind = SyntaxKind.GreaterEqualsToken;
+                    Advance(2);
+                    break;
+                }
+
+                _kind = SyntaxKind.GreaterToken;
+                Advance(1);
+                break;
+            case '<':
+                if (Peek(1) == '=')
+                {
+                    _kind = SyntaxKind.LessEqualsToken;
+                    Advance(2);
+                    break;
+                }
+
+                _kind = SyntaxKind.LessToken;
+                Advance(1);
+                break;
+            case '|':
+                if (Peek(1) == '|')
+                {
+                    _kind = SyntaxKind.PipePipeToken;
+                    Advance(2);
+                    break;
+                }
+
+                _kind = SyntaxKind.PipeToken;
+                Advance(1);
+                break; 
+            case '&':
+                if (Peek(1) == '&')
+                {
+                    _kind = SyntaxKind.AmpersandAmpersandToken;
+                    Advance(2);
+                    break;
+                }
+
+                _kind = SyntaxKind.AmpersandToken;
                 Advance(1);
                 break;
             default:
                 if (char.IsDigit(Current) || Current == '.')
                 {
-                    text = LexNumberTokens();
+                    LexNumberTokens();
                 }
                 else if (char.IsWhiteSpace(Current))
                 {
                     LexWhitespaceTokens();
-                    text = "█";
+                }
+                else if (char.IsLetter(Current))
+                {
+                    LexLetterTokens();
                 }
                 else
                 {
                     Advance(1);
-                    int length = _position - _start;
-                    text = _text.Substring(_start, length);
                 }
                 break;
+        }
+        string? text = SyntaxFacts.GetText(_kind);
+        
+        if (text == null)
+        {
+            int length = _position - _start;
+            text = _text.Substring(_start, length);
         }
         return new SyntaxToken(text, _kind, _value);
     }
