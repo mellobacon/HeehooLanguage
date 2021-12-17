@@ -2,6 +2,9 @@
 
 public enum SyntaxKind
 {
+    OpenParenToken,
+    CloseParenToken,
+    
     NumberToken,
     PlusToken,
     MinusToken,
@@ -14,5 +17,9 @@ public enum SyntaxKind
     
     WhitespaceToken,
     BadToken,
-    EofToken
+    EofToken,
+    
+    BinaryExpression,
+    NumberExpression,
+    GroupedExpression
 }
