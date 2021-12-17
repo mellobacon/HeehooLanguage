@@ -1,6 +1,6 @@
 ﻿namespace HeehooLanguage.CodeAnalysis;
 
-public struct SyntaxToken
+public class SyntaxToken : ISyntaxNode
 {
     public string? Token { get; }
     public SyntaxKind Kind { get; }
@@ -11,5 +11,10 @@ public struct SyntaxToken
         Token = token;
         Kind = kind;
         Value = value;
+    }
+    
+    public IEnumerable<ISyntaxNode> GetChildren()
+    {
+        return ArraySegment<ISyntaxNode>.Empty;
     }
 }
